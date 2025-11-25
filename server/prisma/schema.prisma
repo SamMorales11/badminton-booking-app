@@ -1,0 +1,50 @@
+// Generator dan Datasource
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // Ganti ke "mysql" jika pakai MySQL
+  url      = env("DATABASE_URL")
+}
+
+// Model Lapangan (Court)
+model Court {
+  id          Int       @id @default(autoincrement())
+  name        String    // Contoh: "Lapangan A (Karpet)"
+  pricePerHour Float    // Contoh: 50000
+  bookings    Booking[] // Relasi ke booking
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// Model Reservasi (Booking)
+model Booking {
+  id          Int       @id @default(autoincrement())
+  courtId     Int
+  court       Court     @relation(fields: [courtId], references: [id])
+  
+  name        String    // Nama pemesan (User non-login pun bisa booking)
+  date        DateTime  // Tanggal booking (tanpa jam)
+  startTime   Int       // Jam mulai (misal: 10 untuk jam 10:00)
+  endTime     Int       // Jam selesai (misal: 11 untuk jam 11:00)
+  
+  status      BookingStatus @default(PENDING) // Status pembayaran
+  
+  // Untuk Bonus Point: Payment Gateway
+  paymentId   String?   // ID transaksi dari Midtrans/Stripe
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Constraint: Mencegah double booking di Lapangan, Tanggal, dan Jam yang sama
+  @@unique([courtId, date, startTime])
+}
+
+// Enum untuk Status
+enum BookingStatus {
+  PENDING   // Belum bayar
+  CONFIRMED // Sudah bayar (Booked)
+  CANCELED  // Dibatalkan
+}
